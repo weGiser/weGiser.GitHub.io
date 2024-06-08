@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>全中国范围内各影响因子的空间自回归分析</title>
+    <!-- 引入echarts库文件 -->
+    <script src="echarts.js"></script>
+    <!-- 引入jQuery库文件 -->
+    <script src="js/jquery-3.6.0.js"></script>
+    <style>
+        h1 { color: #F8F9F9; }
+        p {text-indent:2em;}
+        #main {
+            display: flex;
+            justify-content: space-around;
+            /*margin: 15px;*/
+            padding: 20px;
+        }
+        #description {
+            /*border: 2px solid #bfa;*/
+            width: 400px;
+            height: 500px;
+            left: 20px;
+            line-height: 30px;
+            font-size: 19px;
+            /*overflow: scroll;*/
+        }
+        p{
+            text-indent: 2em;
+        }
+    </style>
+</head>
+<body style="background-color:#0e1116;">
+<h1 align="center">全中国范围内各影响因子的空间自回归分析</h1>
+<div id="main">
+    <div id="description" style="color: ghostwhite">
+        <p>依据空间自回归模型得出11个影响因子的回归系数，首先从R<sup>2</sup>可以看出整个模型的拟合程度，R<sup>2</sup>大于0.5，该模型的拟合优度较好，因此可以从各因子的回归系数得到每个因子的影响比例。</p>
+        <p>从右图中很容易发现，耕地、森林以及坡度标准差的回归系数绝对值较大，即这三个影响因子对街道方向熵的影响较大。其中，耕地与街道方向熵呈负相关，即耕地面积占比越大，街道方向熵值越小，街道网越规则。
+而森林以及坡度标准差与街道方向熵呈正相关，即森林面积占比越大、坡度标准差越大，街道方向熵值越大，街道网越不规则。</p>
+    </div>
+    <!-- 定义图表显示区域 -->
+    <div id="myDiv" style="width: 600px; height: 500px; "></div>
+</div>
+
+<script type="text/javascript">
+    // 初始化echarts对象
+    var myChart_exForest = echarts.init(document.getElementById("myDiv"))
+
+    // 指定图表的配置项和数据
+    var option1 = {
+        backgroundColor: '#0e1116',
+        title: {
+            text: '各影响因子的回归系数',
+            //left: 'center',
+            subtext:'R\u00b2=0.546',
+            subtextStyle:{
+                color: '#feffff'      // 副标题字体的颜色（十六进制）
+            },
+            textStyle:{
+                color: '#feffff'      // 标题字体的颜色（十六进制）
+            },
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'axis',
+            formatter: function (params, ticket, callback) {
+                var htmlStr = '';
+                for(var i=0;i<params.length;i++){
+                    var param = params[i];
+                    var xName = param.name;//x轴的名称
+                    var seriesName = param.seriesName;//图例名称
+                    var value = param.value;//y轴值
+                    var color = param.color;//图例颜色
+
+                    if(i===0){
+                        htmlStr += xName + '<br/>';//x轴的名称
+                    }
+                    htmlStr +='<div>';
+
+                    // 具体显示的数据【字段名称：seriesName，值：value】
+                    // 这里判断一下name，如果是我们需要特殊处理的，就处理
+                    if(seriesName === '额外信息')
+                    {
+                        // 前面一条线，后面一条线【具体样式自己写】
+                        //htmlStr += '<div style="border: 1px solid #FFEB3B"></div>';
+                        htmlStr += '显著程度：' + value;
+                        htmlStr += '<div style="border: 1px solid #FFEB3B"></div>';
+                    }
+                    else{
+                        // 正常显示的数据，走默认
+                        htmlStr += '<span style="margin-right:5px;display:inline-block;width:10px;height:10px;border-radius:5px;background-color:'+color+';"></span>';
+                        htmlStr += seriesName + '：' + value;
+                    }
+
+                    htmlStr += '</div>';
+                }
+                return htmlStr;
+            }
+        },
+        legend: {
+            data: ['负','正'],
+            bottom: "0px",
+            left:"300px",
+            textStyle:{
+                fontSize: 12,//字体大小
+                color: '#e8dede'//字体颜色
+            }
+        },
+        grid: {
+            left: '1%',
+            right: '1%',
+            bottom: '8%',
+            containLabel: true
+        },
+        xAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    show: true,
+                    textStyle: {
+                        color: '#e8dede',  //更改坐标轴文字颜色
+                        fontSize : 12      //更改坐标轴文字大小
+                    }
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'category',
+                axisTick: {
+                    show: true
+                },
+                data: ['平均高程','湿地','水体','稀疏植被','灌木地','草地','裸地','居民地', '坡度标准差', '森林','耕地'],
+                axisLabel: {
+                    show: true,
+                    textStyle: {
+                        // color: '#e8dede',  //更改坐标轴文字颜色
+                        fontSize : 14,        //更改坐标轴文字大小
+                        color: function(param,index) {
+                            let colorList = ['#e8dede','#e8dede','#e8dede','#e8dede','#e8dede','#e8dede','#e8dede','#e8dede','#faf747','#faf747','#faf747' ];
+                            return colorList[index]
+                        }
+                    }
+                },
+            }
+        ],
+        series: [
+            {
+                name: '正',
+                type: 'bar',
+                stack: '总量',
+                label: {
+                    show: true,
+                    position: 'insideTop'
+                },
+                emphasis: {
+                    focus: 'series'
+                },
+                itemStyle: {
+                    normal: {
+                        //color: '#32838e'
+                        color: '#5fddec'
+                        /*
+                        // 随机显示
+                        //color:function(d){return "#"+Math.floor(Math.random()*(256*256*256-1)).toString(16);}
+
+                        // 定制显示（按顺序）
+                        color: function(params) {
+                            var colorList = ['#C33531','#EFE42A','#64BD3D','#EE9201','#29AAE3', '#B74AE5','#0AAF9F','#E89589','#16A085','#4A235A','#C39BD3 ','#F9E79F','#BA4A00','#ECF0F1','#616A6B','#EAF2F8','#4A235A','#3498DB' ];
+                            return colorList[params.dataIndex]
+                        }
+                        */
+                    },
+                },
+                data: [0.001, '-', '-', '-', 0.011, 0.009, 0.012, 0.023, 0.049, 0.059, '-']
+            },
+            {
+                name: '负',
+                type: 'bar',
+                stack: '总量',
+                label: {
+                    show: true,
+                    position: 'insideTop'
+                },
+                emphasis: {
+                    focus: 'series'
+                },
+                itemStyle: {
+                    normal: {
+                        color:'#83e56e'
+                        //color:'#4f9344'
+                    },
+                },
+                data: ['-', -0.013, -0.029, -0.029,'-', '-', '-', '-', '-', '-',  -0.062]
+            },
+            {
+                name: '额外信息',
+                data: ['/', '/', 'p<0.05', 'p<0.05', '/', '/', '/', '/','p<0.05', 'p<0.01', 'p<0.01'],
+                type: 'line'
+            },
+        ]
+    };
+
+
+    myChart_exForest.setOption(option1);
+
+</script>
+</body>
+</html>
